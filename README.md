@@ -1,76 +1,22 @@
-# Group Regularization for Zero-inﬂated Count Regression Models with An Application to Healthcare Demand in Germany
-
-## Introduction
-
-In many biomedical applications, covariates are naturally grouped, with variables in the same group being systematically related or statistically correlated. Under such setting [Gooogle](https://github.com/himelmallick/Gooogle) provides a unified algorithm for group regularization in presence of zero abundant count outcome data using a least squares approximation of the mixture likelihood and a variety of group-wise penalties on the coefﬁcients. We investigate the finite sample performance of these methods through extensive simulation experiments. In this repository, we provide the R functions of the simulation and some basic examples on those functions. In addition to the simulation settings, we applied our method on German Healthcare demand dataset and compared the performance with EM Lasso. The associated R codes are also provided in this repository.   
+# Simulation Codes for the Manuscript "Group Regularization for Zero-inflated Regression Models with Application to Healthcare Demand in Germany"
 
 
-## Simulation 
-We conduct two extensive simulation studies to investigate the statistical properties of our proposed group regularization approach across a wide range of scenarios. To effectively evaluate the group selection performance of various methods, we prefix the number of groups to a moderately large number, and vary the group sizes from equal to unequal, and within each group the coefficients are set all zero, all nonzero or a mixture of both. We partition each generated synthetic data into a training set and a test set; models are fitted on the training set and MAE and MASE's are calculated on the test set. We also note the percentage of times correct groups are selected by each method. We consider the sample size in training and test group as {200,200}, {500,500} and {1000,1000}, the zero inflation parameter 0.3, 0.4 and 0.5, the correlation parameter of the covariance matrix of the covariates 0, 0.4 and 0.8. Below we explain each function that we have used to generate the data and calculate the predictive measures that are presented in our simulation study in the manuscript.
-
-### The R Codes
-
-#### Function for data generation: `datagen_sim.R`
-This R file contains three functions for generating simulated data:
-
-1. `datagen.sim1.func` & `datagen.sim2.func`: These are the data generating functions for simulation 1 and 2 respectively which generate one dataset according to the specified parameters. 
-
-* **n:** sample size in each of training and testing group
-* __p:__ Number of covariates
-* __ngrp:__ Number of covariates in each group (constant for this example)
-* __beta:__ True regression coefficients in the count model
-* __gamma:__ True regression coefficients in the zero model
-* __rho:__ Correlation parameter of AR(1) of the covariance matrix for multivariate normal distribution
-* __sim:__ "1" for simulation 1, else takes "2"
-* __family:__ The distribution of the count model ("negbin"). 
-
-These functions generate the dataset, zero-inflated outcome variable, covariates for the count model (X) which are assumed to be equal to that of the zero model (Z), and the proportion of zero inflation.
-
-2. `datagen.sim.all`: The predictive measures require the simulation datasets to be generated multiple times. The function `datagen.sim.all` uses the function `datagen.sim1.func` to generate a prespecified number ("ITER") of the simulated data set for a given set of parameters. It outputs all the datasets in the list form (`data.list`).
-
-#### Function to fit the gooogle method on the training dataset: `fit_method`
-This R file contains the function `fit.method` which takes the the following as arguments:
-
-* __dataset:__ generated dataset using datagen.sim1.func
-* __yvar,xvars,zvars:__ corresponding variables
-* __method:__ "grLasso" (group Lasso), "gBridge" (group bridge), "grSCAD" (group SCAD), "grMCP" (group MCP) or "EMLasso" (EM Lasso) 
-* __group:__ The vector specifying grouping structure of the covariates
-* __dist:__ "negbin"
-
-Depending on the method specified in the argument, this function calls the `gooogle` function from the `Gooogle` package to fit the zero inflated dataset with grouped covariates or calls the function `func_EMLasso` (also present in this R file) which fits the data with Lasso penalty using the zipath function. The functon `fit.method` outputs the fitted coefficients for count model and zero model along with the AIC, BIC and loglikelihood of the zero-inflated model.
-
-### Calculate the predictive measure: `predict_measures.R`
-This R file contains two functions described below:
-
-1. `measures.func`: This function takes the following arguments:
-
-* __train:__ Training dataset obtained from the original dataset 
-* __test:__ Complement of the training dataset used for prediction
-* __fit:__ The output of the function fit.method
-* __yvar,xvars,zvars:__ Corresponding variables
-
-For a given training and test dataset and the fitted coefficients this function calculates and returns the predictive measure MAE and MASE by using the `accuracy` function from the `forecast` package.
-
-2. `measures.summary`: This function takes the following arguments:
-
-* __n:__  Sample size in the training dataset
-* __data.list:__ output of `datagen.sim1.all`
-* __method:__ "grLasso" (group Lasso), "gBridge" (group bridge), "grSCAD" (group SCAD), "grMCP" (group MCP) or "EMLasso" (EM Lasso).
-* __ITER:__ number of simulations
-* __group:__ grouping of the covariates
-* __family:__ "negbin"
-
-This function fits the gooogle method to the training part of a dataset in data.list and calculate the predicted value using the fitted coefficients from the test data. It calls the function `measures.func` to calculate MASE. This is repeated for "ITER" number of datasets and outputs the median MAE and MASE.
-
-## Example 1
-In this example we generate 40 continuous predictors which are grouped into 5 groups consisting of 8 predictors each. The covariates are generated from multivariate normal distribution with `rho` as the corrrelation parameter of the AR(1) covariance matrix. The following function master.func generates 10 datasets for a given n, rho and phi from ZIP model and fits the google function and calculates median MASE as well percentage of correct group selection for both the count and zero model. The values of the regression coefficients for the count model (beta) and those for the zero model (gamma) are given inside the function. 
+### Example 1
+In this example, we generate 40 continuous predictors which are grouped into 5 groups consisting of 8 predictors each. The covariates are generated from multivariate normal distribution with `rho` as the correlation parameter of the AR(1) covariance matrix. The function `master.func` generates a pre-specified number of datasets for a given training and test data size `n.train` and `n.test`, the correlation parameter `rho` and zero abundance parameter `phi` from ZINB model and fits the `gooogle` function on the training data and calculates median MAE and MASE for both the count and zero model based on the test datasets. The values of the regression coefficients for the count model (beta) and those for the zero model (gamma) are provided inside the function. 
 
 ```
-## Load the packages
+## Install Gooogle package
+install.packages("devtools")
+devtools::install_github("himelmallick/Gooogle")
+library(Gooogle)
+```
+
+
+```
+## Load other packages
 
 require(MASS)
 require(forecast)
-require(Gooogle)
 require(mpath)
 require(dummies)
 ```
@@ -78,86 +24,163 @@ require(dummies)
 ```
  ## Specify the true parameter values
   
- count model: beta<-c(5,-1, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, rep(0.2,8), rep(0,24))    
+ count model: beta<-c(5, -1, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, rep(0.2,8), rep(0,24))    
     
- zero model: gamma<-c(-1,-0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, rep(0.2,8), rep(0,24))
- For phi=0.3, gamma_0 (intercept) of the zero model is -1
+ zero model: 
+ For phi=0.3, gamma<-c(-1,-0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, rep(0.2,8), rep(0,24))
+ For phi=0.4, gamma<-c(-0.5,-0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, rep(0.2,8), rep(0,24))
+ For phi=0.5, gamma<-c(0,-0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, rep(0.2,8), rep(0,24))
+```
+    
+```
+ ## The main function for running the simulation and calculating the predictive measures
  
- group: (8,8,8,8,8)
-   ```
-    
-  ```
- ## Generate the list of datasets
+ master.func<-function(n.train,n.test,rho,phi,family,method,sim,ITER)
+{
+  if(sim==1)
+  {
+    # size for each group
+    size=rep(8,5)
+    p=sum(size)
+    # number of groups
+    ngrp<-length(size) 
+  }else{
+    size=c(1,1,3,1,1,3,4,4,4,4,4)
+    p=sum(size)
+    ngrp<-length(size)
+  }
+  group<-NULL
+  for (k in 1:ngrp)
+  {
+    group<-c(group,rep(k,size[k]))
+  }
+  ### Generate the data ###
+  data.list<-datagen.sim.all(n.train=n.train,n.test=n.test,beta=beta,gamma=gamma,rho=rho,phi=phi,family=family,sim=sim,ITER)
   
-  data.list<-datagen.sim.all(n=200,beta=beta,gamma=gamma,rho=0.4,phi=0.3,family="negbin",sim=1,ITER=10)
-  ```
+  ### Calculate the predictive measures ###
+  measures<-measures.summary(n.train=n.train,n.test=n.test,data.list=data.list,method=method,ITER=ITER,group=group,family=family)
   
-  ```
- ## Calculate MASE
-  
-  measures<-measures.summary(n=200,data.list=data.list,method="gBridge",ITER=10,group=group,family="negbin")
-  ```
-  
-  ```
-  ## Calculate the Percentage of correct group selection for both the count and zero model
-  
-  betahat<-measures$betahat
-  gammahat<-measures$gammahat
-  
-  grp.count<- grpresult.func(betahat=betahat,betatrue=beta,sim=1)
-  
-  grp.zero<- grpresult.func(betahat=gammahat,betatrue=gamma,sim=1)
-  
-  pgrp.corr.count<- grp.count$pgrp.correct
-  pgrp.corr.zero<- grp.zero$pgrp.correct
-  
-  result<-(data.frame(measures$output,pgrp.corr.count,pgrp.corr.zero))
-  names(result)<- c("MASE","corr_group_count","corr_group_zero")
-  return(result)
-  ```
+  return(measures)
+}
+```
+
+Below are some examples comparing MAE and MASE of group Lasso and EM Lasso based on 10 replications for different zero inflation proportions (`phi`).
+
+```
+## phi=0.3
+## group lasso 
+master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.3,family="negbin",method="grLasso",sim=1,ITER=10)
+## EM lasso
+master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.3,family="negbin",method="EMLasso",sim=1,ITER=10)
+ 
+ ```
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |grLasso|148.7548 |0.7341 | 
+ |EMLasso|232.3708 |1.1582 |
+ 
+ ```
+ ## phi=0.4
+## group Lasso
+master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.4,family="negbin",method="grLasso",sim=1,ITER=10)
+## EM lasso
+master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.4,family="negbin",method="EMLasso",sim=1,ITER=10)
 
  ```
- ## Output 
-      MASE corr_group_count corr_group_zero
-  0.99965                1             0.8
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |grLasso|137.4921 |0.6958 | 
+ |EMLasso|192.1370 |0.8552 |
+ 
+ ```
+ ## phi=0.5
+## group Lasso
+master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.5,family="negbin",method="grLasso",sim=1,ITER=10)
+## EM lasso
+master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.5,family="negbin",method="EMLasso",sim=1,ITER=10)
+ ```
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |grLasso|100.7777 |0.7067 | 
+ |EMLasso|160.3597 |0.8542 |
+           
+
+### Example 2
+
+In example 2 we generate 6 continuous covariates each of which forms a singleton group. Four more variables (two each from X3 and X6) are further polynomially constructed, giving rise to a total of 10 continuous predictors. For constructing the categorical variables, we generate 5 continuous variables from a multivariate normal distribution and quantile-discretize each of them into 5 new variables based on their quantiles. This leads to a combination of 20 categorical predictors with 5 non-overlapping groups of equal size.
+
 ```
+## The true parameter values
+
+For count model: 
+betag1<-c(0)
+betag2<-c(0)
+betag3<-c(-0.1,0.2,0.1)
+betag4<-c(0)
+betag5<-c(0)
+betag6<-c(2/3,-1,1/3)
+betag7<-c(-2,-1,1,2)
+betag8<-c(0,0,0,0)
+betag9<-c(0,0,0,0)
+betag10<-rep(0,4)
+betag11<-c(0,0,0,0)
+
+beta<-c(5,betag1,betag2,betag3,betag4,betag5,betag6,betag7,betag8,betag9,betag10,betag11)
+
+For zero model:
+phi=0.3: gamma<-c(-1.4,beta[-1])
+phi=0.4: gamma<-c(-.7,beta[-1])
+phi=0.5: gamma<-c(-.15,beta[-1])
+```
+
+Below are some examples illustrating MAE and MASE comparisons between Group Lasso and EM Lasso across a range of zero abundance values. 
+
+```
+ ## phi=0.3
+ master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.3,family="negbin",method="grLasso",sim=2,ITER=10)
+ master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.3,family="negbin",method="EMLasso",sim=2,ITER=10)
+ ```
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |grLasso|145.8202 |0.5172 | 
+ |EMLasso|225.4927 |0.9596|
+ 
+ ```
+ ## phi=0.4
+ master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.4,family="negbin",method="grLasso",sim=2,ITER=10)
+ master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.4,family="negbin",method="EMLasso",sim=2,ITER=10)
+ ```
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |grLasso|127.3018 |0.8545 | 
+ |EMLasso|170.8427 |0.9443 |
+ 
+ ```
+ ## phi=0.5
+ master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.5,family="negbin",method="grLasso",sim=2,ITER=10)
+ master.func(n.train=200,n.test=200,beta=beta,gamma=gamma,rho=0,phi=0.5,family="negbin",method="EMLasso",sim=2,ITER=10)
+ ```
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |grLasso|85.2794  |0.7185 | 
+ |EMLasso|150.7711 |1.1151 |
+ 
+   
 ## Real Data Example
 
-We illustrate our proposal by re-analyzing the auto insurance claim dataset from SAS Enterprise Miner database. The response variable of interest (y) is the aggregate claim loss of an auto insurance policy. Considering only policy records corresponding to the new customers the reduced dataset has 2,812 observations with 56 predictors being grouped into 21 groups of different group sizes. For the comparison of Gooogle methods with EMLasso we employ a repeated 5-fold cross validation (CV) procedure in which the dataset is randomly partitioned into 5 equal folds, iteratively taking each fold as the test set and the remaining set as the trainng set. We fit the models on the training sets and predictions are based on the test sets. We calculate average and median of the Mean Absolute Scaled Error (MASE) as the metric of evaluation, calculated over 100 iterations. 
+We compare the performance of Gooogle method with EM Lasso on German Health Care demand dataset (link). For the sake of meaningful comparison we implement 5 fold cross validation where we randomly partition the dataset into five equal folds - four folds to train the model and one fold for test. Prediction errors are calculated based on the comprehensive set of held out samples. To employ this method we use the `realdata.func` function which takes the dataset, the outcome and predictor variable names, number of CV iterations, number of folds, seed value and the concerning method as input and returns the MASE and MAE. 
 
-## Function
-
-The R file realdata.R contains two functions which are described below:
-
-1) The function fit.out fits gBridge/EMLasso on the training dataset and obtains the regression coefficients for the count as well as the zero model corresponding to the minimum BIC. It takes the following arguments:
-
-* train: Training data
-* test: Test data
-* yvar: The name of the outcome variable
-* xvars: The name of the predictor variables for the count model
-* zvars: The name of the predictor variables for the zero model
-* group: The vector specifying grouping structure of the covariates
-* penalty: "gBridge" or "EMLasso"
-
-The function outputs the predicted value of the outcome variable and outcome variable from the test and the training set.
-
-2) The function realdata.R takes the following arguments:
-
-* data: The real auto insurance dataset 
-* yvar, xvars, zvars: The name of the corresponding variables
-* cv.iter: Number of iteration for calculating MASE using 5-fold CV mechanism
-* k.fold: Number of CV folds (here it is 5)
-* penalty: "gBridge" or "EMLasso"
-
-This function forms the training and test data set iteratively in the 5-fold CV for every dataset and calls the function fit.out and using the output of the fit.out it calculates MASE using the function accuracy{forecast}.
-
-The following codes can be used to obtain MASE of Gooogle and EM methods respecively.
+Below is an example code for calculating the median of MAE and MASE over 5 iterations using 5-fold CV for the Gooogle method using "gBridge" penalty and for "EMLasso". 
 
 ```
 result.gooogle<-realdata.func(data=data,yvar=yvar,xvars=xvars,zvars=zvars,cv.iter=5,k.fold=5,seedval=123,method="Gooogle")
+
 result.em<-realdata.func(data=data,yvar=yvar,xvars=xvars,zvars=zvars,cv.iter=5,k.fold=5,seedval=123,method="EMLasso")
 ```
 
-
-
-
+ |Method | MAE     | MASE  |
+ |-------|:-------:|------:|
+ |gBridge|2.9844   |0.9616 | 
+ |EMLasso|3.1874   |1.0270 |
+ 
+ 
