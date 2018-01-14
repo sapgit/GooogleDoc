@@ -2,7 +2,7 @@
 
 
 ### Example 1
-In this example, we generate 40 continuous predictors which are grouped into 5 groups consisting of 8 predictors each. The covariates are generated from multivariate normal distribution with `rho` as the correlation parameter of the AR(1) covariance matrix. The wrapper function `master.func` in [master.R](../blob/master/master.R) generates a pre-specified number of datasets for a given training and test data size `n.train` and `n.test`, the correlation parameter `rho` and zero abundance parameter `phi` from ZINB model and fits the `gooogle` function on the training data and calculates median MAE and MASE for both the count and zero model based on the test datasets. The values of the regression coefficients for the count model (beta) and those for the zero model (gamma) are provided inside the function. 
+In this example, we generate 40 continuous predictors which are grouped into 5 groups consisting of 8 predictors each. The covariates are generated from multivariate normal distribution with `rho` as the correlation parameter of the AR(1) covariance matrix. The wrapper function `master.func` in [master.R](master.R) generates a pre-specified number of datasets for a given training and test data size `n.train` and `n.test`, the correlation parameter `rho` and zero abundance parameter `phi` from ZINB model and fits the `gooogle` function on the training data and calculates median MAE and MASE for both the count and zero model based on the test datasets. The values of the regression coefficients for the count model (beta) and those for the zero model (gamma) are provided inside the function. 
 
 ```
 ## Install Gooogle package
