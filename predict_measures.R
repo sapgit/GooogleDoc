@@ -14,7 +14,7 @@ measures.func<-function(train,test,fit,yvar,xvars,zvars)
 {
   if (is.na(fit))
   {
-    measures<-c(NA,NA,NA)
+    measures<-c(NA,NA)
   } else {
     betahat<-fit$coefficients$count
     gammahat<-fit$coefficients$zero
@@ -66,6 +66,5 @@ measures.summary<-function(n.train,n.test,data.list,method,ITER,group,family)
   output<-apply(measures.mat,2, function(x) {median(x, na.rm=T)})
 
   options(warn=0)
-
-  return(list(output=output))
+  return(output)
 }
