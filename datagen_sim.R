@@ -1,17 +1,27 @@
 #' Title
 #' @description This function generates one dataset according to the specified parameters for simulation 1
 #'
-#' @param n.train Sample grpsize in the training dataset
-#' @param n.test Sample grpsize in the test dataset
-#' @param beta True regression coeffficients in the count model
-#' @param gamma True regression coeffficients in the zero model
+#' @param n.train Sample size in the training dataset
+#' @param n.test Sample size in the test dataset
+#' @param grpsize Group size
 #' @param rho Correlation parameter of AR(1) covariance matrix for multivariate normal distribution
 #' @param phi Zero-inflation parameter
-#' @param family Distribution of the count model which is Negative Binomial in this case
 #'
 #' @return Dataset along with the variable names and the proportion of zero inflation
-datagen.sim1.func<-function(n.train,n.test,beta,gamma,grpsize,rho,phi,family,seedval)
+datagen.sim1.func<-function(n.train,n.test,grpsize,rho,phi,seedval)
 {
+  # true parameter values used for count part 
+  beta<-c(-1, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, rep(0.2,8), rep(0,24))
+  beta<-c(5,beta) 
+  
+  # true parameter values used for zero part (excluding intercept)
+  gamma<-c(-0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, rep(0.2,8), rep(0,24))
+  
+  # determine gamma0 according to zero inflation (phi)
+  if (phi==0.3) gamma<-c(-1,gamma)
+  if (phi==0.4) gamma<-c(-0.5,gamma)
+  if (phi==0.5) gamma<-c(0,gamma)
+  
   if (!is.null(seedval)) set.seed(seedval)
 
   n=n.train+n.test
@@ -48,17 +58,17 @@ datagen.sim1.func<-function(n.train,n.test,beta,gamma,grpsize,rho,phi,family,see
   {
     rn<-round(runif(1)*10^5)
     set.seed(rn)
-    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family=family)
+    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family="negbin")
 
     set.seed(rn)
     ## capture from console output ##
-    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family=family))
+    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family="negbin"))
     zeroinfl<-as.numeric(substring(yout[1],15))
   } else {
-    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family=family)
+    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family="negbin")
 
     ## capture from console output ##
-    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family=family))
+    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family="negbin"))
     zeroinfl<-as.numeric(substring(yout[1],15))
   }
 
@@ -69,19 +79,37 @@ datagen.sim1.func<-function(n.train,n.test,beta,gamma,grpsize,rho,phi,family,see
 #' Title
 #' @description This function generates one dataset according to the specified parameters for simulation 2
 #'
-#' @param n.train Sample grpsize in the training dataset
-#' @param n.test Sample grpsize in the test dataset
-#' @param beta True regression coeffficients in the count model
-#' @param gamma True regression coeffficients in the zero model
+#' @param n.train Sample size in the training dataset
+#' @param n.test Sample size in the test dataset
 #' @param rho Correlation parameter of AR(1) covariance matrix for multivariate normal distribution
+#' @param grpsize Group size
 #' @param phi Zero-inflation parameter
-#' @param family Distribution of the count model which is Negative Binomial in this case
 #'
 #' @return Dataset along with the variable names and the proportion of zero inflation
 #'
-datagen.sim2.func<-function(n.train,n.test,beta,gamma,rho,grpsize,phi,family,seedval)
+datagen.sim2.func<-function(n.train,n.test,rho,grpsize,phi,seedval)
 {
+  betag1<-c(0)
+  betag2<-c(0)
+  betag3<-c(-0.1,0.2,0.1)
+  betag4<-c(0)
+  betag5<-c(0)
+  betag6<-c(2/3,-1,1/3)
+  betag7<-c(-2,-1,1,2)
+  betag8<-c(0,0,0,0)
+  betag9<-c(0,0,0,0)
+  betag10<-rep(0,4)
+  betag11<-c(0,0,0,0)
+  
+  beta<-c(5,betag1,betag2,betag3,betag4,betag5,betag6,betag7,betag8,betag9,betag10,betag11)
+  
+  # determine gamma0 according to zero inflation (phi)
+  if (phi==0.3) gamma<-c(-1.4,beta[-1])
+  if (phi==0.4) gamma<-c(-0.7,beta[-1])
+  if (phi==0.5) gamma<-c(-0.15,beta[-1])
+  
   if (!is.null(seedval)) set.seed(seedval)
+  
   n=n.train+n.test
   p1=6;p2=5;ngrp1=6;ngrp2=5;
   R<-matrix(rnorm(n*p1),n,p1)
@@ -142,17 +170,17 @@ datagen.sim2.func<-function(n.train,n.test,beta,gamma,rho,grpsize,phi,family,see
   {
     rn<-round(runif(1)*10^5)
     set.seed(rn)
-    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family=family)
+    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family="negbin")
 
     set.seed(rn)
     ## capture from console output ##
-    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family=family))
+    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family="negbin"))
     zeroinfl<-as.numeric(substring(yout[1],15))
   } else {
-    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family=family)
+    y<-rzi(n=n,x=X,z=X,a=beta,b=gamma,family="negbin")
 
     ## capture from console output ##
-    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family=family))
+    yout<-capture.output(rzi(n,x=X,z=X,a=beta,b=gamma,family="negbin"))
     zeroinfl<-as.numeric(substring(yout[1],15))
   }
 
@@ -166,15 +194,13 @@ datagen.sim2.func<-function(n.train,n.test,beta,gamma,rho,grpsize,phi,family,see
 #'
 #' @param n.train Sample grpsize in the training dataset
 #' @param n.test Sample grpsize in the test dataset
-#' @param beta True regression coeffficients in the count model
-#' @param gamma True regression coeffficients in the zero model
 #' @param rho Correlation parameter of AR(1) covariance matrix for multivariate normal distribution
 #' @param phi Zero-inflation parameter
-#' @param family Distribution of the count model which is Negative Binomial in this case
+#' @param grpsize Group size
 #' @param sim Simulation number
 #' @param ITER Iteration number
 #' @return ITER number of datasets in the list form `data.list`
-datagen.sim.all<-function(n.train,n.test,beta,gamma,rho,phi,grpsize,family,sim,ITER,seedval)
+datagen.sim.all<-function(n.train,n.test,rho,phi,grpsize,sim,ITER,seedval)
 {
   data.list<-NULL
 
@@ -189,11 +215,11 @@ datagen.sim.all<-function(n.train,n.test,beta,gamma,rho,phi,grpsize,family,sim,I
   if(sim==1)
   {
     for (i in 1:ITER) {
-      dataset<-datagen.sim1.func(n.train=n.train,n.test=n.test,beta=beta,gamma=gamma,grpsize=grpsize,rho=rho,phi=phi,family=family,seedval=seedvals[i])
+      dataset<-datagen.sim1.func(n.train=n.train,n.test=n.test,grpsize=grpsize,rho=rho,phi=phi,seedval=seedvals[i])
       data.list<-c(data.list,list(dataset))
     }
   }else{for (i in 1:ITER) {
-    dataset<-datagen.sim2.func(n.train=n.train,n.test=n.test,beta=beta,gamma=gamma,grpsize=grpsize,rho=rho,phi=phi,family=family,seedval=seedvals[i])
+    dataset<-datagen.sim2.func(n.train=n.train,n.test=n.test,grpsize=grpsize,rho=rho,phi=phi,seedval=seedvals[i])
     data.list<-c(data.list,list(dataset))
   }
   }

@@ -49,7 +49,7 @@ fit.out<-function(train,test,yvar,xvars,zvars,group,penalty)
   return(list(y.train=y.train,y.test=y.test,y.pred=y.pred))
 }
 
-data<-read.table("C:\\Users\\schowdhury\\Dropbox\\Gooogle\\Data\\docvisits_spline.txt",header=T,sep=",")
+data<-read.table(".\\Realdata_cluster\\Data\\docvisits_spline.txt",header=T,sep=",")
 group=c(rep(1:5,each=3),(6:14))
 
 yvar<-names(data)[1]
@@ -71,6 +71,7 @@ zvars<-xvars
 
 realdata.func<-function(data,yvar,xvars,zvars,cv.iter,k.fold,seedval,penalty)
 {
+  ptm<-proc.time()
   set.seed(seedval)
   folds <- cvFolds(nrow(data), K = k.fold, R = cv.iter)
   cv<-cbind.data.frame(folds$which,folds$subsets)
@@ -88,7 +89,6 @@ realdata.func<-function(data,yvar,xvars,zvars,cv.iter,k.fold,seedval,penalty)
     y.predv<-NULL
     y.trainv<-NULL
 
-    # time.taken<-0
     for (k in 1:k.fold)
     {
       print(paste("fold",k))
@@ -97,9 +97,7 @@ realdata.func<-function(data,yvar,xvars,zvars,cv.iter,k.fold,seedval,penalty)
       train<-data[train.idx,]
       test<-data[-train.idx,]
 
-      # ptm<-proc.time()
       temp<-fit.out(train=train,test=test,yvar=yvar,xvars=xvars,zvars=zvars,group=group,penalty=penalty)
-      # time.taken<-time.taken+round((proc.time()-ptm)[3],3)
 
       y.test<-temp$y.test
       y.pred<-temp$y.pred
@@ -115,28 +113,11 @@ realdata.func<-function(data,yvar,xvars,zvars,cv.iter,k.fold,seedval,penalty)
     measures<-rbind(measures,c(iter=i,accuracy(forecast,y.test)[2,c(3,6)]))
 
   }
-  return(measures)
+  measures<-apply(measures[,-1],2,function(x) return(round(median(x,na.rm=T),3)))
+  time.taken<-round((proc.time()-ptm)[3],3)
+  return(list(measures=measures,time=time.taken))
 }
 
-result<-realdata.func(data=data,yvar=yvar,xvars=xvars,zvars=zvars,cv.iter=5,k.fold=5,seedval=123,penalty="EMLasso")
-result
+# result<-realdata.func(data=data,yvar=yvar,xvars=xvars,zvars=zvars,cv.iter=5,k.fold=5,seedval=123,penalty="EMLasso")
+# result
 
-
-# path<-"C:\\Users\\Saptarshi\\Dropbox\\Gooogle\\Codes\\UAB_Cluster_CV_Analysis\\Results\\"
-#
-# cv.result<-NULL
-# for(i in 1:10)
-# {
-#   load(paste(path,"docvisit_CV_negbin_",i,".RData",sep=""))
-#
-#   if(i==1)
-#   {
-#     cv.result<-cbind(cv.result,as.matrix(final$cv))
-#   } else {
-#     cv.result<-cbind(cv.result,as.matrix(final$cv[,-1]))
-#   }
-# }
-# cv.result<-as.data.frame(cv.result)
-# names(cv.result)<-c("fold",paste("iter",1:100,sep=""))
-# save(cv.result,file=paste(path,"CV_result_doc.RData"))
-# load(paste(path,"CV_result_doc.RData"))

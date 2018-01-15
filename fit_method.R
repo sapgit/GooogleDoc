@@ -6,20 +6,21 @@
 #' @param xvars Name of the predictor variables of the count model
 #' @param zvars Name of the predictor variables of the zero model
 #' @param method Different penalties
-#' @param dist Distribution of the count model which is Negative Binomial in this case
 #' @param group Vector containing grouping structure of the covariates
 #'
 #' @return  fitted coefficients for count model and zero model along with the AIC, BIC and loglikelihood of the ZINB model
 
-fit.method<-function(dataset,yvar,xvars,zvars,method,dist,group)
+fit.method<-function(dataset,yvar,xvars,zvars,method,group)
 {
   fit.formula<-as.formula(paste(yvar,"~",paste(paste(xvars,collapse="+"),"|",paste(zvars,collapse="+"),sep="")))
   if (method=="EMLasso") {
     ptm<-proc.time()
-    fit<-try(eval(call(paste("func_",method,sep=""),formula=fit.formula,data=dataset,dist=dist)),silent=T)
+    fit<-try(eval(call(paste("func_",method,sep=""),formula=fit.formula,data=dataset,dist="negbin")),silent=T)
+    time.taken<-round((proc.time()-ptm)[3],3)
   } else {
     ptm<-proc.time()
-    fit<-try(eval(call(paste("func_",method,sep=""),data=dataset,yvar=yvar,xvars=xvars,zvars=zvars,group=group,dist=dist)),silent=T)
+    fit<-try(eval(call(paste("func_",method,sep=""),data=dataset,yvar=yvar,xvars=xvars,zvars=zvars,group=group,dist="negbin")),silent=T)
+    time.taken<-round((proc.time()-ptm)[3],3)
   }
 
   # if there is an error in calling func_methods
@@ -27,5 +28,5 @@ fit.method<-function(dataset,yvar,xvars,zvars,method,dist,group)
   {
     fit<-NA
   }
-  return(fit)
+  return(list(fit=fit,time=time.taken))
 }

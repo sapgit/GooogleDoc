@@ -1,3 +1,13 @@
+b.mean <- function(vec, num, na.rm=T) {
+  if(na.rm) vec<-vec[!is.na(vec)]
+  vec<-rm.outlier(vec)
+  resamples <- lapply(1:num, function(i) sample(vec, replace=T))
+  r.mean <- sapply(resamples, mean)
+  std.err <- sqrt(var(r.mean))
+  return(round(std.err,2))
+}
+
+
 #' Title
 #'
 #' @description For a given training and test dataset and the fitted coefficients this function calculates MAE and MASE
@@ -40,11 +50,10 @@ measures.func<-function(train,test,fit,yvar,xvars,zvars)
 #' @param method Different penalties
 #' @param ITER Number of simulations
 #' @param group Vector containing grouping structure of the covariates
-#' @param family Distribution of the count model which is Negative Binomial in this case
 #'
 #' @return The median of MAE and MASE, calculated over all the simulated datasets
 
-measures.summary<-function(n.train,n.test,data.list,method,ITER,group,family)
+measures.summary<-function(n.train,n.test,data.list,method,ITER,group)
 {
   options(warn=-1)
   measures.mat<-NULL
@@ -58,13 +67,24 @@ measures.summary<-function(n.train,n.test,data.list,method,ITER,group,family)
     xvars<-dataset$xvars
     zvars<-dataset$zvars
 
-    fit<-fit.method(dataset=train,yvar=yvar,xvars=xvars,zvars=zvars,method=method,group=group,dist=family)
+    fit.summary<-fit.method(dataset=train,yvar=yvar,xvars=xvars,zvars=zvars,method=method,group=group)
+    fit<-fit.summary$fit
+    time.taken<-fit.summary$time
 
     predict.measures<- measures.func(train=train,test=test,fit=fit,yvar=yvar,xvars=xvars,zvars=zvars)
-    measures.mat<-rbind(measures.mat,predict.measures)
+    measures.mat<-rbind(measures.mat,c(predict.measures,time.taken))
   }
-  output<-apply(measures.mat,2, function(x) {median(x, na.rm=T)})
+  
+  measures.se<-t(apply(apply(measures.mat[,-3],2,function(x) return(as.numeric(x))),2,b.mean,num=1000,na.rm=T))
+  
+  measures.median<-apply(measures.mat,2, function(x){median(x, na.rm=T)})
+  
+  mae.summary<-paste(round(measures.median[1],3),"(",round(measures.se[1],3),")",sep="")
 
+  mase.summary<-paste(round(measures.median[2],3),"(",round(measures.se[2],3),")",sep="")
+  
+  output<-c(MAE=mae.summary,MASE=mase.summary,time.taken=measures.median[3])
+  
   options(warn=0)
   return(output)
 }
